@@ -1,15 +1,28 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
 
-app = FastAPI()
+from repository import ScoreRepository
+from service import LeaderboardService
+
+app = FastAPI(title="Game Leaderboard API")
+
+repository = ScoreRepository()
+service = LeaderboardService(repository)
+
+
+class ScoreIn(BaseModel):
+    player_name: str
+    score: int
+
 
 @app.get("/")
 def read_root():
-    return {"message": "Hello"}
-
-@app.get("/hello/{name}")
-def say_hello(name, age: int | None = None):
-    if age is None:
-        return {"message": f"Hello {name}!"}
-    return {"message": f"Hello {name}, you are {age}!"}
+    return {"message": "Leaderboard API is running"}
 
 
+@app.post("/scores", status_code=201)
+def create_score(body: ScoreIn):
+    try:
+        return service.submit_score(body.player_name, body.score)
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error))

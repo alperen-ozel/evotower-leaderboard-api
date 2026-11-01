@@ -3,7 +3,8 @@ import sqlite3
 
 class ScoreRepository:
     def __init__(self, db_path: str = "scores.db"):
-        self.conn = sqlite3.connect(db_path)
+        # FastAPI runs sync routes in a thread pool, so the connection must be shareable.
+        self.conn = sqlite3.connect(db_path, check_same_thread=False)
         self.conn.execute("""
             CREATE TABLE IF NOT EXISTS scores (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
