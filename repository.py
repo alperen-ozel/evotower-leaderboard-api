@@ -22,6 +22,13 @@ class ScoreRepository:
         )
         self.conn.commit()
 
+    def get_best_scores(self) -> list[tuple[str, int]]:
+        """Return (player_name, best_score) for every player."""
+        rows = self.conn.execute(
+            "SELECT player_name, MAX(score) FROM scores GROUP BY player_name"
+        ).fetchall()
+        return rows
+
 
 if __name__ == "__main__":
     repo = ScoreRepository()

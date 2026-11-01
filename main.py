@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from pydantic import BaseModel
 
 from repository import ScoreRepository
@@ -26,3 +26,8 @@ def create_score(body: ScoreIn):
         return service.submit_score(body.player_name, body.score)
     except ValueError as error:
         raise HTTPException(status_code=400, detail=str(error))
+
+
+@app.get("/leaderboard")
+def get_leaderboard(top: int = Query(10, ge=1, le=100)):
+    return service.get_leaderboard(top)
