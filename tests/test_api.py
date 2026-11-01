@@ -43,6 +43,28 @@ def test_post_score_with_wrong_type_returns_422(client):
     assert response.status_code == 422
 
 
+def test_post_huge_score_returns_400_not_a_server_error(client):
+    response = post_score(client, "Alp", 10**30)
+
+    assert response.status_code == 400
+
+
+def test_post_boolean_score_returns_422(client):
+    response = client.post("/scores", json={"player_name": "Alp", "score": True})
+
+    assert response.status_code == 422
+
+
+def test_sql_injection_text_is_stored_as_plain_text(client):
+    nasty_name = "x'); DROP TABLE scores;--"
+    post_score(client, nasty_name, 1)
+
+    response = client.get("/leaderboard")
+
+    assert response.status_code == 200
+    assert response.json()[0]["player_name"] == nasty_name
+
+
 def test_leaderboard_returns_players_best_first(client):
     post_score(client, "Alp", 100)
     post_score(client, "Alp", 900)

@@ -1,7 +1,7 @@
 import pytest
 
 from repository import ScoreRepository
-from service import LeaderboardService
+from service import MAX_NAME_LENGTH, MAX_SCORE, LeaderboardService
 
 
 @pytest.fixture
@@ -43,6 +43,20 @@ def test_submit_score_rejects_empty_name(service):
 def test_submit_score_rejects_name_with_only_spaces(service):
     with pytest.raises(ValueError):
         service.submit_score("   ", 100)
+
+
+def test_submit_score_rejects_too_long_name(service):
+    with pytest.raises(ValueError):
+        service.submit_score("A" * (MAX_NAME_LENGTH + 1), 100)
+
+
+def test_submit_score_rejects_score_above_maximum(service):
+    with pytest.raises(ValueError):
+        service.submit_score("Alp", MAX_SCORE + 1)
+
+
+def test_submit_score_accepts_the_limits(service):
+    assert service.submit_score("A" * MAX_NAME_LENGTH, MAX_SCORE)["score"] == MAX_SCORE
 
 
 def test_submit_score_accepts_zero_and_trims_the_name(service):

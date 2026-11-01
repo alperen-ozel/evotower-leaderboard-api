@@ -3,6 +3,9 @@ from datetime import datetime, timezone
 
 from repository import ScoreRepository
 
+MAX_NAME_LENGTH = 50
+MAX_SCORE = 2**31 - 1  # largest signed 32-bit int, e.g. a Unity `int`
+
 
 class LeaderboardService:
     """Business rules. Knows nothing about HTTP or SQL."""
@@ -14,8 +17,12 @@ class LeaderboardService:
         player_name = player_name.strip()
         if not player_name:
             raise ValueError("player_name must not be empty")
+        if len(player_name) > MAX_NAME_LENGTH:
+            raise ValueError(f"player_name must be at most {MAX_NAME_LENGTH} characters")
         if score < 0:
             raise ValueError("score must not be negative")
+        if score > MAX_SCORE:
+            raise ValueError(f"score must be at most {MAX_SCORE}")
 
         # Fixed-width timestamp so that text comparison equals time comparison.
         created_at = datetime.now(timezone.utc).isoformat(timespec="microseconds")

@@ -1,5 +1,5 @@
 from fastapi import FastAPI, HTTPException, Query
-from pydantic import BaseModel
+from pydantic import BaseModel, StrictInt
 
 from repository import ScoreRepository
 from service import LeaderboardService
@@ -12,7 +12,7 @@ service = LeaderboardService(repository)
 
 class ScoreIn(BaseModel):
     player_name: str
-    score: int
+    score: StrictInt  # rejects True/False and numeric strings
 
 
 @app.get("/")
