@@ -69,9 +69,3 @@ class ScoreRepository:
             (score, score, reached_at),
         ).fetchone()
         return row[0]
-
-
-if __name__ == "__main__":
-    repo = ScoreRepository()
-    repo.add_score("Ali", 500, "2026-10-31")
-    print(repo.conn.execute("SELECT * FROM scores").fetchall())
