@@ -162,3 +162,16 @@ def test_get_player_rank_matches_leaderboard_position(service, repository):
 def test_get_player_unknown_name_raises_lookup_error(service):
     with pytest.raises(LookupError):
         service.get_player("Nobody")
+
+
+# --- database ------------------------------------------------------------------
+
+
+def test_player_lookup_uses_the_index_not_a_full_scan(repository):
+    plan = repository.conn.execute(
+        "EXPLAIN QUERY PLAN SELECT MAX(score) FROM scores WHERE player_name = ?",
+        ("Alp",),
+    ).fetchall()
+    details = " ".join(row[3] for row in plan)
+
+    assert "idx_scores_player_score" in details

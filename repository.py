@@ -26,6 +26,12 @@ class ScoreRepository:
                 created_at TEXT NOT NULL
             )
         """)
+        # Lets SQLite find a player's scores and best score with an index search
+        # instead of scanning the whole table.
+        self.conn.execute("""
+            CREATE INDEX IF NOT EXISTS idx_scores_player_score
+            ON scores (player_name, score)
+        """)
         self.conn.commit()
 
     def add_score(self, player_name: str, score: int, created_at: str) -> None:
