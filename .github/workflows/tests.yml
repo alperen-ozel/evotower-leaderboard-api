@@ -25,3 +25,23 @@ jobs:
 
       - name: Run tests
         run: python -m pytest -v
+
+  docker:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v4
+
+      - name: Build the Docker image
+        run: docker build -t leaderboard-api .
+
+      - name: Start the container and check it answers
+        run: |
+          docker run -d -p 8000:8000 --name api leaderboard-api
+          for i in $(seq 1 20); do
+            curl -sf http://localhost:8000/ && exit 0
+            sleep 1
+          done
+          docker logs api
+          exit 1

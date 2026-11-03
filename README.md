@@ -64,9 +64,11 @@ n = number of players, m = number of stored scores, k = `top`.
 
 | Operation | Time | Space | Notes |
 | --- | --- | --- | --- |
-| `POST /scores` | O(log m) | O(1) | One insert into SQLite's B-tree |
-| `GET /leaderboard` | O(m log m) + O(n log k) | O(n + k) | SQL groups the scores into n best scores (SQLite sorts to group, no index yet); the heap then keeps the top k in O(n log k) instead of sorting all n |
-| `GET /players/{name}` | O(m log m) | O(n) | Same grouping, then counts the players ranked above; no full sort of the ranking |
+| `POST /scores` | O(log m) | O(1) | Insert into the table and the index (both B-trees) |
+| `GET /leaderboard` | O(m + n log n) + O(n log k) | O(n + k) | SQL reads the index in order to get each player's best score, then groups n rows; the heap keeps the top k in O(n log k) instead of sorting all n |
+| `GET /players/{name}` | O(log m) + O(m + n log n) | O(n) | The player's best score is an index search; counting the players ranked above uses the same grouping |
+
+The index on `(player_name, score)` replaced two full-table scans with index searches. You can check it with SQLite's `EXPLAIN QUERY PLAN`; a test does exactly that.
 
 ## Running locally
 
@@ -81,13 +83,22 @@ uvicorn main:app --reload
 
 Then open http://127.0.0.1:8000/docs.
 
+### With Docker
+
+```bash
+docker build -t leaderboard-api .
+docker run -p 8000:8000 leaderboard-api
+```
+
 ## Tests
 
 ```bash
 python -m pytest -v
 ```
 
-29 tests cover the service and the API: normal flows, ranking and tie-breaks, input limits, wrong types, unknown players and SQL-injection text. Each API test runs against a fresh in-memory database. GitHub Actions runs the suite on every push and pull request.
+30 tests cover the service, the API and the database: normal flows, ranking and tie-breaks, input limits, wrong types, unknown players, SQL-injection text and index use. Each test runs against a fresh in-memory database.
+
+GitHub Actions runs on every push and pull request: first the test suite, then a job that builds the Docker image, starts the container and checks that the API answers.
 
 ## How this was built
 
@@ -95,7 +106,6 @@ I developed this project with Claude Code as an AI pair programmer. Design choic
 
 ## Possible next steps
 
-- An index on `(player_name, score)` to speed up the per-player queries as the table grows.
 - Authentication and rate limiting so scores can only come from the game client.
 - Caching the top list, and moving to PostgreSQL for concurrent writes at scale.
 - Deployment to AWS.
